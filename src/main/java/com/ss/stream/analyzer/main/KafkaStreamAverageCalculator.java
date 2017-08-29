@@ -146,7 +146,7 @@ public class KafkaStreamAverageCalculator {
 
 			if (kafkaProducer == null) {
 				kafkaProducer = new KafkaProducer();
-				kafkaProducer.initializeProducer("localhost:9092", "localhost:2181");
+				kafkaProducer.initializeProducer("hdp-16.tap-psnc.net:9092", "hdp-16.tap-psnc.net:2181");
 			}
 			if (mapper == null) {
 				mapper = new ObjectMapper();
