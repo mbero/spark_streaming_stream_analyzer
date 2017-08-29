@@ -29,9 +29,15 @@ public class KafkaStreamAverageCalculator {
 
 		if (args.length < 4) {
 			args = new String[4];
-			// TODO - for local tests
+			// TODO - for local tests on windows
+			/*
 			System.err.println("Usage: JavaKafkaWordCount <zkQuorum> <group> <topics> <numThreads>");
 			args[0] = "localhost:2181";
+			args[1] = "testKafkaGroupName";
+			args[2] = "bms";
+			args[3] = "4";
+			*/
+			args[0] = "hdp-16.tap-psnc.net:2181";
 			args[1] = "testKafkaGroupName";
 			args[2] = "bms";
 			args[3] = "4";
@@ -44,7 +50,7 @@ public class KafkaStreamAverageCalculator {
 			topicMap.put(topic, numThreads);
 		}
 
-		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[2]");
+		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[*]").setSparkHome("/usr/hdp/current/spark2-client/");
 
 		// Create the context with 2 seconds batch size
 		JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
