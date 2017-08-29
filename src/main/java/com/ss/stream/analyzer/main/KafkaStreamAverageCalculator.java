@@ -39,7 +39,7 @@ public class KafkaStreamAverageCalculator {
 			*/
 			args[0] = "hdp-16.tap-psnc.net:2181";
 			args[1] = "testKafkaGroupName";
-			args[2] = "bms";
+			args[2] = "bms_data";
 			args[3] = "4";
 		}
 
