@@ -144,9 +144,6 @@ public class KafkaStreamAverageCalculator {
 			// return Optional.of(new
 			// Double[]{summer,counter,sumsqr,bestmin,bestmax,mean,m2,var});
 
-			// TODO - produce Kafka message before returning optional
-			// Preparing kafka producer objects
-
 			if (kafkaProducer == null) {
 				kafkaProducer = new KafkaProducer();
 				kafkaProducer.initializeProducer("localhost:9092", "localhost:2181");

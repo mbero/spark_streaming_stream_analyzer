@@ -61,9 +61,6 @@ public class KafkaStreamPropertyAggregator {
 //----------------------------------------------------------------------------------------------------------------
 		
 		
-		
-		//Definicja funkcji mapuj¹cej  ( na podstawie tuple 2 zwracamy Stringa -
-		//tu powinno miec miejsce pobieranie danych z JSOn'a
 		JavaDStream<String> lines = messages.map(new Function<Tuple2<String, String>, String>() {
 			public String call(Tuple2<String, String> tuple2) {
 				JSONObject jsonObj = new JSONObject(tuple2._2);
