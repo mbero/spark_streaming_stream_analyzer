@@ -24,42 +24,50 @@ import scala.Tuple2;
 public class KafkaStreamAverageCalculator {
 	static KafkaProducer kafkaProducer;
 	static ObjectMapper mapper;
+	static String currentReadTagID;
+
+	private final static String kafkaGroupName = "testKafkaGroupName";
+	private final static String threadsAmount = "3";
+
+	static String inputZookeperAdress;
+	static String inputTopicsNames;
+	static String outputTopicName;
+	static String outputZookeperAdress;
+	static String outputKafkaServerAdress;
 
 	public static void main(String[] args) throws Exception {
-
 		if (args.length < 4) {
 			args = new String[4];
-			// TODO - for local tests on windows
-			/*
-			System.err.println("Usage: JavaKafkaWordCount <zkQuorum> <group> <topics> <numThreads>");
-			args[0] = "localhost:2181";
-			args[1] = "testKafkaGroupName";
-			args[2] = "bms";
-			args[3] = "4";
-			*/
-			args[0] = "hdp-16.tap-psnc.net:2181";
-			args[1] = "testKafkaGroupName";
-			args[2] = "bms_data";
-			args[3] = "4";
+			inputZookeperAdress = "localhost:2181";
+			inputTopicsNames = "bms";
+			outputTopicName = "stream_processing_results";
+			outputZookeperAdress = inputZookeperAdress;
+			outputZookeperAdress = "localhost:6667";
+		} else {
+			inputZookeperAdress = args[0];
+			inputTopicsNames = args[1];
+			outputTopicName = args[2];
+			outputZookeperAdress = args[3];
+			outputKafkaServerAdress = args[4];
 		}
 
-		int numThreads = Integer.parseInt(args[3]);
+		int numThreads = Integer.parseInt(threadsAmount);
 		Map<String, Integer> topicMap = new HashMap<>();
-		String[] topics = args[2].split(",");
+		String[] topics = inputTopicsNames.split(",");
 		for (String topic : topics) {
 			topicMap.put(topic, numThreads);
 		}
 
-		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[*]").setSparkHome("/usr/hdp/current/spark2-client/");
+		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[*]")
+				.setSparkHome("/usr/hdp/current/spark2-client/");
 
 		// Create the context with 2 seconds batch size
 		JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
-		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, args[0], args[1],
-				topicMap);
+		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, inputZookeperAdress,
+				kafkaGroupName, topicMap);
 
 		// Required for 'updateByKey'
 		jssc.checkpoint("./spark_cache");
-
 		// ----------------------------------------------------------------------------------------------------------------
 
 		/*
@@ -146,16 +154,17 @@ public class KafkaStreamAverageCalculator {
 
 			if (kafkaProducer == null) {
 				kafkaProducer = new KafkaProducer();
-				kafkaProducer.initializeProducer("hdp-16.tap-psnc.net:9092", "hdp-16.tap-psnc.net:2181");
+				kafkaProducer.initializeProducer(outputKafkaServerAdress, outputZookeperAdress);
 			}
 			if (mapper == null) {
 				mapper = new ObjectMapper();
 			}
-			
+
+			// TODO - instead of 'test' - > put proper device id as key !
 			SparkStreamingStatisticsProcessingResult sssProcessingResult = new SparkStreamingStatisticsProcessingResult(
-					"test", summer, counter, sumsqr, delta, bestmin, bestmax, mean, m2, var);
+					currentReadTagID, summer, counter, sumsqr, delta, bestmin, bestmax, mean, m2, var);
 			String sssProcesingResultJSON = getJSONObjectFromCurrentStatisticsData(mapper, sssProcessingResult);
-			kafkaProducer.produceMessage("stream_processing_results", "key", sssProcesingResultJSON);
+			kafkaProducer.produceMessage("stream_processing_results", currentReadTagID, sssProcesingResultJSON);
 
 			return Optional.of(new Double[] { summer, counter, sumsqr, bestmin, bestmax, mean, m2, var });
 		});
@@ -191,6 +200,7 @@ public class KafkaStreamAverageCalculator {
 	private static String getReadTagIdFromStreamRecord(Object s) {
 		JSONObject jsonObject = new JSONObject(String.valueOf(s));
 		String readTagId = jsonObject.getString("readTag_id");
+		currentReadTagID = readTagId;
 		return readTagId;
 	}
 
