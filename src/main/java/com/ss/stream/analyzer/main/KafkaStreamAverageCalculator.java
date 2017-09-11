@@ -27,7 +27,7 @@ public class KafkaStreamAverageCalculator {
 	static String currentReadTagID;
 
 	private final static String kafkaGroupName = "testKafkaGroupName";
-	private final static String threadsAmount = "3";
+	private final static String threadsAmount = "1";
 
 	static String inputZookeperAdress;
 	static String inputTopicsNames;
@@ -42,7 +42,7 @@ public class KafkaStreamAverageCalculator {
 			inputTopicsNames = "bms";
 			outputTopicName = "stream_processing_results";
 			outputZookeperAdress = "localhost:2181";
-			outputKafkaServerAdress = "localhost:6667";
+			outputKafkaServerAdress = "localhost:9092";
 		} else {
 			inputZookeperAdress = args[0];
 			inputTopicsNames = args[1];
@@ -58,8 +58,8 @@ public class KafkaStreamAverageCalculator {
 			topicMap.put(topic, numThreads);
 		}
 
-		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[*]")
-				.setSparkHome("/usr/hdp/current/spark2-client/");
+		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[*]");
+				//.setSparkHome("/usr/hdp/current/spark2-client/");
 
 		// Create the context with 2 seconds batch size
 		JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
@@ -164,7 +164,8 @@ public class KafkaStreamAverageCalculator {
 			SparkStreamingStatisticsProcessingResult sssProcessingResult = new SparkStreamingStatisticsProcessingResult(
 					currentReadTagID, summer, counter, sumsqr, delta, bestmin, bestmax, mean, m2, var);
 			String sssProcesingResultJSON = getJSONObjectFromCurrentStatisticsData(mapper, sssProcessingResult);
-			kafkaProducer.produceMessage("stream_processing_results", currentReadTagID, sssProcesingResultJSON);
+			System.out.println("Current SparkStreaming analysis result pushed to Kafka" + sssProcesingResultJSON);
+			kafkaProducer.produceMessage(outputTopicName, currentReadTagID, sssProcesingResultJSON);
 
 			return Optional.of(new Double[] { summer, counter, sumsqr, bestmin, bestmax, mean, m2, var });
 		});
