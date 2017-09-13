@@ -39,7 +39,7 @@ public class KafkaStreamAverageCalculator {
 		if (args.length < 4) {
 			args = new String[4];
 			inputZookeperAdress = "localhost:2181";
-			inputTopicsNames = "bms";
+			inputTopicsNames = "bms_data";
 			outputTopicName = "stream_processing_results";
 			outputZookeperAdress = "localhost:2181";
 			outputKafkaServerAdress = "localhost:9092";
