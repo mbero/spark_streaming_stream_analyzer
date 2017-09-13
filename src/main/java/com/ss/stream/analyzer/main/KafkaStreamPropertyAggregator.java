@@ -31,9 +31,7 @@ public class KafkaStreamPropertyAggregator {
 	}
 
 	public static void main(String[] args) throws Exception {
-		
-	
-		
+
 		args = new String[4];
 		args[0] = "localhost:2181";
 		args[1] = "testKafkaGroupName";
@@ -51,33 +49,33 @@ public class KafkaStreamPropertyAggregator {
 		for (String topic : topics) {
 			topicMap.put(topic, numThreads);
 		}
-		
+
 		SparkConf sparkConf = new SparkConf().setAppName("JavaKafkaWordCount").setMaster("local[2]");
-		
+
 		// Create the context with 2 seconds batch size
 		JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
-		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, args[0], args[1],topicMap);
+		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, args[0], args[1],
+				topicMap);
 
-//----------------------------------------------------------------------------------------------------------------
-		
-		
+		// ----------------------------------------------------------------------------------------------------------------
+
 		JavaDStream<String> lines = messages.map(new Function<Tuple2<String, String>, String>() {
 			public String call(Tuple2<String, String> tuple2) {
 				JSONObject jsonObj = new JSONObject(tuple2._2);
 				String readTag_id = jsonObj.getString("readTag_id");
-				
-				//return tuple2._2();
+
+				// return tuple2._2();
 				return readTag_id;
 			}
 		});
-		
+
 		JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
 			public Iterator<String> call(String x) {
 				Iterator<String> iteratorOfStrings = Arrays.asList(SPACE.split(x)).iterator();
 				return iteratorOfStrings;
 			}
 		});
-		
+
 		JavaPairDStream<String, Integer> wordCounts = words.mapToPair(new PairFunction<String, String, Integer>() {
 			private static final long serialVersionUID = 1L;
 
@@ -88,13 +86,13 @@ public class KafkaStreamPropertyAggregator {
 		}).reduceByKey(new Function2<Integer, Integer, Integer>() {
 
 			private static final long serialVersionUID = 1L;
+
 			public Integer call(Integer i1, Integer i2) {
 				return i1 + i2;
 			}
 		});
-		
+
 		wordCounts.print();
-		
 
 		jssc.start();
 		jssc.awaitTermination();
